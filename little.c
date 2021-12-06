@@ -16,8 +16,7 @@
 #include <unistd.h>
 
 /* defines */
-#define KILO_VERSION "0.0.1"
-#define KILO_TAB_STOP 8
+#define TAB_STOP 8
 #define CTRL_KEY(k) ((k) & 0x1f)
 
 enum editorKey {
@@ -202,7 +201,7 @@ int editorRowCxToRx(erow *row, int cx) {
   int j; 
   for (j = 0; j < cx; j++) {
     if (row->chars[j] == '\t')
-      rx += (KILO_TAB_STOP - 1) - (rx % KILO_TAB_STOP);
+      rx += (TAB_STOP - 1) - (rx % TAB_STOP);
     rx++;
   }
   return rx;
@@ -215,13 +214,13 @@ void editorUpdateRow(erow *row) {
     if (row->chars[j] == '\t') tabs++;
 
   free(row->render);
-  row->render = malloc(row->size + tabs*(KILO_TAB_STOP) + 1);
+  row->render = malloc(row->size + tabs*(TAB_STOP) + 1);
 
   int idx = 0;
   for (j = 0; j < row->size; j++) {
     if (row->chars[j] == '\t') {
       row->render[idx++] = ' ';
-      while (idx % (KILO_TAB_STOP) != 0) row->render[idx++] = ' ';
+      while (idx % (TAB_STOP) != 0) row->render[idx++] = ' ';
     } else {
       row->render[idx++] = row->chars[j];
     }
@@ -312,28 +311,11 @@ void editorDrawRows(struct abuf *ab) {
   int y;
   for (y = 0; y < E.screenrows; y++) {
     int filerow = y + E.rowoff;
-    if (filerow >= E.numrows) {
-      if (E.numrows == 0 && y == E.screenrows / 3) {
-        char welcome[80];
-        int welcomelen = snprintf(welcome, sizeof(welcome),
-            "Kilo editor -- version %s", KILO_VERSION);
-        if (welcomelen > E.screencols) welcomelen = E.screencols;
-        int padding = (E.screencols - welcomelen) / 2;
-        if (padding) {
-          abAppend(ab, "~", 1);
-          padding--;
-        }
-        while (padding--) abAppend(ab, " ", 1);
-        abAppend(ab, welcome, welcomelen);
-      } else {
-        abAppend(ab, "~", 1);
-      }
-    } else {
-      int len = E.row[filerow].rsize - E.coloff;
-      if (len < 0) len = 0;
-      if (len > E.screencols) len = E.screencols;
-      abAppend(ab, &E.row[filerow].render[E.coloff], len);
-    }
+
+    int len = E.row[filerow].rsize - E.coloff;
+    if (len < 0) len = 0;
+    if (len > E.screencols) len = E.screencols;
+    abAppend(ab, &E.row[filerow].render[E.coloff], len);
 
     abAppend(ab, "\x1b[K", 3);
     abAppend(ab, "\r\n", 2);
@@ -344,7 +326,7 @@ void editorDrawStatusBar(struct abuf *ab) {
   abAppend(ab, "\x1b[7m", 4);
   char status[80], rstatus[80]; 
   int len = snprintf(status, sizeof(status), "%.20s - %d/%d lines",
-      E.filename ? E.filename : "[No file opened]", E.cy + 1, E.numrows);
+      E.filename, E.cy + 1, E.numrows);
   int rlen = snprintf(rstatus, sizeof(rstatus), "%d/%d", 
       E.cy + 1, E.numrows);
   if (len > E.screencols) len = E.screencols;
