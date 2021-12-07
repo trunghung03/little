@@ -8,6 +8,11 @@ PgUp and PgDn to move through a whole page.
 Home and End to move to start and end of a line.
 ^Q to quit.
 
+## Featured to be added
+- Search function
+- Syntax Highlighting
+- Turn Little into an actual text editor
+
 ## Credits
 This is made from [Snaptoken's tutorial](https://github.com/snaptoken/kilo-tutorial) that was based on [Antirez's Kilo text editor](https://github.com/antirez/kilo).
 
