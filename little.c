@@ -16,6 +16,7 @@
 #include <unistd.h>
 
 /* defines */
+#define LITTLE_VERSION "0.0.1"
 #define TAB_STOP 8
 #define CTRL_KEY(k) ((k) & 0x1f)
 
@@ -45,6 +46,9 @@ struct abuf;
 void abAppend(struct abuf *, const char *, int len);
 void abFree(struct abuf *);
 
+// file i/o
+void editorOpen(char *);
+
 // output
 void editorDrawRows();
 void editorRefreshScreen();
@@ -73,6 +77,7 @@ struct editorConfig {
   int numrows;
   erow *row;
   char *filename;
+  int isprinting;
   char statusmsg[80];
   time_t statusmsg_time;
   struct termios orig_termios;
@@ -240,12 +245,40 @@ void editorAppendRow(char *s, size_t len) {
 
   E.row[at].rsize = 0;
   E.row[at].render = NULL;
-  editorUpdateRow(&E.row[at]);
+  if (E.isprinting) {
+    printf("%s\r\n", E.row[at].chars);
+  } else editorUpdateRow(&E.row[at]);
 
   E.numrows++;
 }
 
 /* file i/o */
+void argHandling(int argc, char *argv[]) {
+  int option;
+  
+  while((option = getopt(argc, argv, "vhp:")) != -1) {
+    switch (option) {
+      case 'v':
+        printf("Little text viewer, version %s", LITTLE_VERSION);
+        exit(0);
+      case 'h':
+        puts("Command line options:\r\n\
+            -h: Display help\r\n\
+            -v: Display version number\r\n\
+            -p: Prints file to standard output\r\n");
+        exit(0);
+      case 'p':
+        E.isprinting = 1;
+        editorOpen(argv[optind]);
+        exit(0);
+      case '?':
+        exit(1);
+    }
+   }
+  if (optind)
+    editorOpen(argv[optind]); //If there is no options then getopt would just go right through all cases and filename is gonna be 0
+  }
+
 void editorOpen(char *filename) {
   E.filename = strdup(filename);
 
@@ -485,6 +518,7 @@ void initEditor() {
   E.numrows = 0;
   E.row = NULL;
   E.filename = NULL;
+  E.isprinting = 0;
   E.statusmsg[0] = '\0';
   E.statusmsg_time = 0;
 
@@ -493,18 +527,18 @@ void initEditor() {
 }
 
 
-int main(int argc, char *argv[]) {  
-  enableRawMode();
+int main(int argc, char **argv) {  
   initEditor();
   if (argc >= 2) {
-    editorOpen(argv[1]);
+    argHandling(argc, argv);
   } else {
-    printf("Missing Arguments: No File Specified\r\n");
+    printf("Missing Arguments: Not enough arguments\r\n");
     exit(1);
   }
 
-  editorSetStatusMessage("HELP: Ctrl-Q = quit");
+  editorSetStatusMessage("HELP: 'q' to quit");
 
+  enableRawMode();
   while (1) {
     editorRefreshScreen();
     editorProcessKeypress();

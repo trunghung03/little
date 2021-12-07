@@ -7,6 +7,7 @@ Navigating is possible with arrow keys and Vim keys as well.
 PgUp and PgDn to move through a whole page.
 Home and End to move to start and end of a line.
 ^Q to quit.
+Use optional argument -p to print content to command line (similar to GNU cat).
 
 ## Featured to be added
 - Search function
